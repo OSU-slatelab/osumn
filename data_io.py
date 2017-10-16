@@ -51,6 +51,10 @@ def read_kaldi_ark_from_scp(uid, offset, batch_size, buffer_size, scp_fn, ark_ba
                 continue
             utt_id, path_pos = line.replace("\n", "").split()
             ark_path, pos = path_pos.split(":")
+            if 'bagchid' in ark_path:
+                ark_path_list = ark_path.split('/')
+                ark_path = os.path.join(*ark_path_list[-3:])
+            # print(ark_base_dir, ark_path)
             ark_path = os.path.join(ark_base_dir, ark_path)
             ark_read_buffer = smart_open(ark_path, "rb")
             ark_read_buffer.seek(int(pos),0)
