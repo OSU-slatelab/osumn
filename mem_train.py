@@ -6,7 +6,9 @@ from torch.autograd import Variable
 from torch.nn import functional as F
 from torch.optim import Adam
 from feedforward import *
-from constants import FEATURE_LENGTH, MODEL_CHOICE, CUDA, INNER_EMB_SIZE, NUM_EPOCHS
+from constants import FEATURE_LENGTH, MODEL_CHOICE, CUDA, INNER_EMB_SIZE, NUM_EPOCHS, log_constants
+
+log_constants()
 
 train_loader = DataLoader(
     base_dir        = "/fs/project/PAS1315/group1_chime2_data",
@@ -26,7 +28,7 @@ dev_loader = DataLoader(
     buffer_size     = 10,
     context         = 5,
     out_frame_count = 1,
-    shuffle         = True)
+    shuffle         = False)
 
 if MODEL_CHOICE == 'mem':
     model = MemNet(inner_emb_size=INNER_EMB_SIZE)
