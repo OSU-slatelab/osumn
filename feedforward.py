@@ -52,11 +52,11 @@ class NotSoCrazyFeedForward(nn.Module):
         self.dropout = nn.Dropout()
 
     def forward(self, x, C):
-        # x = self.batchnorm1(x)
+        x = self.dropout(self.batchnorm1(x))
         x = F.relu(self.layer1(x))
-        # x = self.batchnorm2(x)
+        x = self.batchnorm2(x)
         x = F.relu(self.layer2(x))
-        # x = self.batchnorm2(x)
+        x = self.batchnorm2(x)
         x = self.layer3(x)
         return x
 
