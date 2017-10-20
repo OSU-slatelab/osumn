@@ -50,6 +50,7 @@ with tf.Session() as sess:
         print("Epoch", epoch)
         print("Train loss:", train_loss)
 
+        test_loss = 0
         for in_frame_batch, out_frame_batch in dev_loader.batchify():
             fd = {in_frames: in_frame_batch, out_frames: out_frame_batch}
             test_loss += sess.run(loss, fd)
