@@ -202,7 +202,7 @@ class DataLoader:
                 for i in self.indexes[start:end]), axis = 0)
 
             out_frame_batch = np.stack((self.out_frame_buffer[i:i+self.out_frame_count,]
-                for i in self.indexes[start:end]), axis = 0)
+                for i in self.indexes[start:end]), axis = 0).squeeze()
 
             # Increment batch, and if necessary re-fill buffer
             batch_index += 1
