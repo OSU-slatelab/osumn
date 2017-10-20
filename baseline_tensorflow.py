@@ -14,7 +14,7 @@ train_loader = DataLoader(
     shuffle = True,
 )
 
-dev_loder = DataLoader(
+dev_loader = DataLoader(
     base_dir = "/fs/project/PAS1315/group1_chime2_data",
     in_frame_file = "data-spectrogram/dev_dt_05_delta_noisy_global_normalized/feats.scp.mod",
     out_frame_file = "data-fbank/dev_dt_05_clean_global_normalized/feats.scp.mod",
