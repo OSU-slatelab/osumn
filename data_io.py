@@ -212,6 +212,8 @@ class DataLoader:
 
             yield in_frame_batch, out_frame_batch
 
+        self.reset()
+
     def reset(self):
         self.uid = 0
         self.offset = 0
