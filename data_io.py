@@ -114,8 +114,6 @@ class DataLoader:
         self.uid = 0
         self.offset = 0
 
-        self.empty = True
-
     def read_mats(self, frame_file):
         """ Read features from file into a buffer """
         #Read a buffer containing buffer_size*batch_size+offset
@@ -189,10 +187,8 @@ class DataLoader:
         """ Make a batch of frames and senones """
 
         batch_index = 0
-        if self.empty:
-            self._fill_buffer()
-            self.empty = False
- 
+        self.reset()
+
         while not self.empty:
             start = batch_index * self.batch_size
             end = min((batch_index+1) * self.batch_size, self.out_frame_buffer.shape[0])
@@ -212,7 +208,6 @@ class DataLoader:
 
             yield in_frame_batch, out_frame_batch
 
-        self.reset()
 
     def reset(self):
         self.uid = 0
