@@ -34,8 +34,13 @@ in_frames = tf.placeholder(tf.float32, shape=(None, 11, 771))
 out_frames = tf.placeholder(tf.float32, shape=(None, 40))
 
 flat = tf.contrib.layers.flatten(in_frames)
+flat = tf.layers.dropout(flat)
 fc1 = tf.layers.dense(flat, 2048, tf.nn.relu)
+fc1 = tf.layers.dropout(fc1)
+fc1 = tf.layers.batch_normalization(fc1)
 fc2 = tf.layers.dense(fc1, 2048, tf.nn.relu)
+fc2 = tf.layers.dropout(fc2)
+fc2 = tf.layers.batch_normalization(fc2)
 out = tf.layers.dense(fc2, 40)
 
 loss = tf.losses.mean_squared_error(out_frames, out)
