@@ -1,10 +1,14 @@
 import tensorflow as tf
+import argparse
 
 from data_io import DataLoader
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--base_dir", default="/fs/project/PAS1315/group1_chime2_data")
+args = parser.parse_args()
 
 train_loader = DataLoader(
-    base_dir = "/fs/project/PAS1315/group1_chime2_data",
+    base_dir = args.base_dir,
     in_frame_file = "data-spectrogram/train_si84_delta_noisy_global_normalized/feats.scp",
     out_frame_file = "data-fbank/train_si84_clean_global_normalized/feats.scp",
     batch_size = 1024,
@@ -15,7 +19,7 @@ train_loader = DataLoader(
 )
 
 dev_loader = DataLoader(
-    base_dir = "/fs/project/PAS1315/group1_chime2_data",
+    base_dir = args.base_dir,
     in_frame_file = "data-spectrogram/dev_dt_05_delta_noisy_global_normalized/feats.scp.mod",
     out_frame_file = "data-fbank/dev_dt_05_clean_global_normalized/feats.scp.mod",
     batch_size = 1024,
