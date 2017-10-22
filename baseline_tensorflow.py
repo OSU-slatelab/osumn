@@ -32,14 +32,15 @@ dev_loader = DataLoader(
 
 in_frames = tf.placeholder(tf.float32, shape=(None, 11, 771))
 out_frames = tf.placeholder(tf.float32, shape=(None, 40))
+training = tf.placeholder(tf.bool)
 
 flat = tf.contrib.layers.flatten(in_frames)
-flat = tf.layers.dropout(flat)
+flat = tf.layers.dropout(flat, training=training)
 fc1 = tf.layers.dense(flat, 2048, tf.nn.relu)
-fc1 = tf.layers.dropout(fc1)
+fc1 = tf.layers.dropout(fc1, training=training)
 fc1 = tf.layers.batch_normalization(fc1)
 fc2 = tf.layers.dense(fc1, 2048, tf.nn.relu)
-fc2 = tf.layers.dropout(fc2)
+fc2 = tf.layers.dropout(fc2, training=training)
 fc2 = tf.layers.batch_normalization(fc2)
 out = tf.layers.dense(fc2, 40)
 
@@ -52,7 +53,7 @@ with tf.Session() as sess:
     for epoch in range(20):
         train_loss = 0
         for in_frame_batch, out_frame_batch in train_loader.batchify():
-            fd = {in_frames: in_frame_batch, out_frames: out_frame_batch}
+            fd = {in_frames: in_frame_batch, out_frames: out_frame_batch, training: True}
             batch_loss, _ = sess.run([loss, train], fd)
             train_loss += batch_loss
             
@@ -61,7 +62,7 @@ with tf.Session() as sess:
 
         test_loss = 0
         for in_frame_batch, out_frame_batch in dev_loader.batchify():
-            fd = {in_frames: in_frame_batch, out_frames: out_frame_batch}
+            fd = {in_frames: in_frame_batch, out_frames: out_frame_batch, training: False}
             test_loss += sess.run(loss, fd)
 
         print("Test loss:", test_loss)
