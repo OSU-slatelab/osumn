@@ -1,3 +1,6 @@
 __pycache__
 data-*
 *.txt
+*.pyc
+*.sw*
+*.o*
