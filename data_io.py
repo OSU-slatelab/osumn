@@ -183,7 +183,7 @@ class DataLoader:
         self.in_frame_buffer = in_frames
         self.out_frame_buffer = out_frames
 
-    def batchify(self):
+    def batchify(self, include_deltas=True):
         """ Make a batch of frames and senones """
 
         batch_index = 0
@@ -206,7 +206,10 @@ class DataLoader:
                 batch_index = 0
                 self._fill_buffer()
 
-            yield in_frame_batch, out_frame_batch
+            if include_deltas:
+                yield in_frame_batch, out_frame_batch
+            else:
+                yield in_frame_batch[:,:,:257], out_frame_batch
 
 
     def reset(self):
