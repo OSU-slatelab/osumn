@@ -8,6 +8,7 @@ import gzip
 import logging
 import numpy as np
 import struct
+from random import shuffle
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +88,26 @@ def kaldi_write_mats(ark_path, utt_id, utt_mat):
     ark_write_buf.write(struct.pack('<bi', 4, cols))
     ark_write_buf.write(utt_mat)
 
+def load_utterance_locations(data_dir, frame_file):
+
+    locations = {}
+
+    with open(os.path.join(data_dir, frame_file)) as f:
+        for line in f:
+            utterance_id, path = line.replace("\n", "").split()
+            path, location = path.split(":")
+            ark_path = os.path.join(data_dir, path)
+            locations[utterance_id] = int(location)
+
+    return locations, ark_path
+
+def read_mat(buff, byte):
+    buff.seek(byte, 0)
+    header = struct.unpack("<xcccc", buff.read(5))
+    m, rows = struct.unpack("<bi", buff.read(5))
+    n, cols = struct.unpack("<bi", buff.read(5))
+    tmp_mat = np.frombuffer(buff.read(rows * cols * 4), dtype=np.float32)
+    return np.reshape(tmp_mat, (rows, cols))
 
 class DataLoader:
     """ Class for loading features and labels from file into a buffer, and batching. """
@@ -102,9 +123,6 @@ class DataLoader:
             shuffle):
 
         """ Initialize the data loader including filling the buffer """
-        self.data_dir = base_dir
-        self.in_frame_file = in_frame_file
-        self.out_frame_file = out_frame_file
         self.batch_size = batch_size
         self.buffer_size = buffer_size
         self.context = context
@@ -114,33 +132,48 @@ class DataLoader:
         self.uid = 0
         self.offset = 0
 
-    def read_mats(self, frame_file):
+        in_locations, self.in_ark_path = load_utterance_locations(base_dir, in_frame_file)
+        out_locations, self.out_ark_path = load_utterance_locations(base_dir, out_frame_file)
+
+        self.locations = []
+        for key in in_locations:
+            self.locations.append({'id':key, 'in_byte': in_locations[key], 'out_byte': out_locations[key]})
+
+    def read_mats(self):
         """ Read features from file into a buffer """
         #Read a buffer containing buffer_size*batch_size+offset
         #Returns a line number of the scp file
-        scp_fn = os.path.join(self.data_dir, frame_file)
-        ark_dict, uid = read_kaldi_ark_from_scp(
-                self.uid,
-                self.offset,
-                self.batch_size,
-                self.buffer_size,
-                scp_fn,
-                self.data_dir)
 
-        return ark_dict, uid
+        in_ark_dict = {}
+        out_ark_dict = {}
+        totframes = 0
+
+        in_ark_buffer = smart_open(self.in_ark_path, "rb")
+        out_ark_buffer = smart_open(self.out_ark_path, "rb")
+        while totframes < self.batch_size * self.buffer_size - self.offset and self.uid < len(self.locations):
+            in_mat = read_mat(in_ark_buffer, self.locations[self.uid]['in_byte'])
+            out_mat = read_mat(out_ark_buffer, self.locations[self.uid]['out_byte'])
+
+            in_ark_dict[self.locations[self.uid]['id']] = in_mat
+            out_ark_dict[self.locations[self.uid]['id']] = out_mat
+
+            totframes += len(in_mat)
+            self.uid += 1
+
+        in_ark_buffer.close()
+        out_ark_buffer.close()
+
+        return in_ark_dict, out_ark_dict
 
     def _fill_buffer(self):
         """ Read data from files into buffers """
 
         # Read data
-        in_frame_dict, uid_new  = self.read_mats(self.in_frame_file)
-        out_frame_dict, uid_new = self.read_mats(self.out_frame_file)
+        in_frame_dict, out_frame_dict = self.read_mats()
 
         if len(in_frame_dict) == 0:
             self.empty = True
             return
-
-        self.uid = uid_new
 
         ids = sorted(in_frame_dict.keys())
 
@@ -183,11 +216,11 @@ class DataLoader:
         self.in_frame_buffer = in_frames
         self.out_frame_buffer = out_frames
 
-    def batchify(self, include_deltas=True):
+    def batchify(self, shuffle_batches=False, include_deltas=True):
         """ Make a batch of frames and senones """
 
         batch_index = 0
-        self.reset()
+        self.reset(shuffle_batches)
 
         while not self.empty:
             start = batch_index * self.batch_size
@@ -212,9 +245,11 @@ class DataLoader:
                 yield in_frame_batch[:,:,:257], out_frame_batch
 
 
-    def reset(self):
+    def reset(self, shuffle_batches):
         self.uid = 0
         self.offset = 0
         self.empty = False
+        if shuffle_batches:
+            shuffle(self.locations)
 
         self._fill_buffer()
